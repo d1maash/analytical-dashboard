@@ -11,7 +11,6 @@ export async function POST() {
   }
 
   try {
-  try {
     const products = await parseDummyJSON()
 
     // Save to database

@@ -35,9 +35,7 @@ export default function DashboardPage() {
   const { t, locale } = useLanguage()
   const { analytics, loading, error, setAnalytics, setLoading, setError } =
     useStore()
-  const [parsingSource, setParsingSource] = useState<
-    "dummyjson" | "fakestore" | null
-  >(null)
+  const [parsing, setParsing] = useState(false)
   const currency = getCurrencyForLocale(locale)
 
   const fetchAnalytics = async () => {
@@ -55,18 +53,28 @@ export default function DashboardPage() {
     }
   }
 
-  const handleParse = async (source: "dummyjson" | "fakestore") => {
-    setParsingSource(source)
+  const handleParse = async () => {
+    setParsing(true)
     try {
-      const response = await fetch(`/api/parse/${source}`, {
-        method: "POST",
-      })
-      if (!response.ok) throw new Error("Failed to parse data")
+      const sources: Array<"dummyjson" | "fakestore"> = [
+        "dummyjson",
+        "fakestore",
+      ]
+
+      for (const source of sources) {
+        const response = await fetch(`/api/parse/${source}`, {
+          method: "POST",
+        })
+        if (!response.ok) {
+          throw new Error(`Failed to parse ${source}`)
+        }
+      }
+
       await fetchAnalytics()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
-      setParsingSource(null)
+      setParsing(false)
     }
   }
 
@@ -103,26 +111,13 @@ export default function DashboardPage() {
             {t.dashboard.subtitle}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => handleParse("dummyjson")}
-            disabled={!!parsingSource}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
-          >
-            {parsingSource === "dummyjson"
-              ? t.dashboard.parsing
-              : t.dashboard.parseDummyJSON}
-          </button>
-          <button
-            onClick={() => handleParse("fakestore")}
-            disabled={!!parsingSource}
-            className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 transition-colors"
-          >
-            {parsingSource === "fakestore"
-              ? t.dashboard.parsing
-              : t.dashboard.parseFakeStore}
-          </button>
-        </div>
+        <button
+          onClick={handleParse}
+          disabled={parsing}
+          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+        >
+          {parsing ? t.dashboard.parsing : t.dashboard.parseData}
+        </button>
       </div>
 
       {analytics && (

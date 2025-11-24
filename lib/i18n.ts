@@ -39,8 +39,7 @@ export const translations = {
     dashboard: {
       title: "Дашборд",
       subtitle: "Обзор аналитики",
-      parseDummyJSON: "Загрузить DummyJSON",
-      parseFakeStore: "Загрузить FakeStore",
+      parseData: "Загрузить данные",
       parsing: "Загрузка...",
       totalProducts: "Всего товаров",
       averagePrice: "Средняя цена",
@@ -133,8 +132,7 @@ export const translations = {
     dashboard: {
       title: "Dashboard",
       subtitle: "Comprehensive analytics overview",
-      parseDummyJSON: "Parse DummyJSON",
-      parseFakeStore: "Parse FakeStore",
+      parseData: "Load Data",
       parsing: "Parsing...",
       totalProducts: "Total Products",
       averagePrice: "Average Price",

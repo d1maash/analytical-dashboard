@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
 
 interface SourceStats {
   source: string
@@ -12,6 +14,8 @@ interface SourceStats {
 }
 
 export default function SourcesPage() {
+  const { t, locale } = useLanguage()
+  const currency = getCurrencyForLocale(locale)
   const [sources, setSources] = useState<SourceStats[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +89,7 @@ export default function SourcesPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t.common.loading}</p>
         </div>
       </div>
     )
@@ -95,7 +99,7 @@ export default function SourcesPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
-          Error: {error}
+          {t.common.error}: {error}
         </div>
       </div>
     )
@@ -103,7 +107,7 @@ export default function SourcesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Data Sources</h1>
+      <h1 className="text-3xl font-bold mb-8">{t.sources.title}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sources.map((source) => (
@@ -116,32 +120,44 @@ export default function SourcesPage() {
             </h2>
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-muted-foreground">Total Products</p>
+                <p className="text-sm text-muted-foreground">{t.sources.totalProducts}</p>
                 <p className="text-xl font-bold">{source.count}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Average Price</p>
+                <p className="text-sm text-muted-foreground">{t.sources.averagePrice}</p>
                 <p className="text-xl font-bold">
-                  ${source.averagePrice?.toFixed(2) || "N/A"}
+                  {source.averagePrice ? formatCurrency(
+                    convertCurrency(source.averagePrice, "USD", currency),
+                    currency,
+                    locale
+                  ) : "N/A"}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-sm text-muted-foreground">Min Price</p>
+                  <p className="text-sm text-muted-foreground">{t.sources.minPrice}</p>
                   <p className="text-lg">
-                    ${source.minPrice?.toFixed(2) || "N/A"}
+                    {source.minPrice ? formatCurrency(
+                      convertCurrency(source.minPrice, "USD", currency),
+                      currency,
+                      locale
+                    ) : "N/A"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Max Price</p>
+                  <p className="text-sm text-muted-foreground">{t.sources.maxPrice}</p>
                   <p className="text-lg">
-                    ${source.maxPrice?.toFixed(2) || "N/A"}
+                    {source.maxPrice ? formatCurrency(
+                      convertCurrency(source.maxPrice, "USD", currency),
+                      currency,
+                      locale
+                    ) : "N/A"}
                   </p>
                 </div>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Categories ({source.categories.length})
+                  {t.sources.categories} ({source.categories.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {source.categories.slice(0, 5).map((cat) => (
@@ -166,7 +182,7 @@ export default function SourcesPage() {
 
       {sources.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No sources found</p>
+          <p className="text-muted-foreground">{t.sources.noSourcesFound}</p>
         </div>
       )}
     </div>

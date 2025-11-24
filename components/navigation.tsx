@@ -4,17 +4,20 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/products", label: "Products" },
-  { href: "/sources", label: "Sources" },
-]
+import { useLanguage } from "@/contexts/LanguageContext"
+import { LanguageSelector } from "@/components/language-selector"
 
 export function Navigation() {
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
+  const { t } = useLanguage()
+
+  const navItems = [
+    { href: "/dashboard", label: t.common.dashboard },
+    { href: "/products", label: t.common.products },
+    { href: "/sources", label: t.common.sources },
+  ]
 
   const handleSignOut = async () => {
     await signOut({ redirect: false })
@@ -44,6 +47,7 @@ export function Navigation() {
                 {item.label}
               </Link>
             ))}
+            <LanguageSelector />
             {session && (
               <div className="flex items-center gap-4">
                 <span className="text-sm text-muted-foreground">
@@ -53,7 +57,7 @@ export function Navigation() {
                   onClick={handleSignOut}
                   className="text-sm text-muted-foreground hover:text-foreground"
                 >
-                  Sign Out
+                  {t.common.signOut}
                 </button>
               </div>
             )}

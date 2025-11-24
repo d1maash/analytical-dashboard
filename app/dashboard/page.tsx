@@ -20,6 +20,9 @@ import {
   Area,
 } from "recharts"
 import { TrendingUp, TrendingDown, Package, DollarSign } from "lucide-react"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import { translateProductName } from "@/lib/translations/products"
 
 const COLORS = [
   "hsl(var(--foreground))",
@@ -29,9 +32,13 @@ const COLORS = [
 ]
 
 export default function DashboardPage() {
+  const { t, locale } = useLanguage()
   const { analytics, loading, error, setAnalytics, setLoading, setError } =
     useStore()
-  const [parsing, setParsing] = useState(false)
+  const [parsingSource, setParsingSource] = useState<
+    "dummyjson" | "fakestore" | null
+  >(null)
+  const currency = getCurrencyForLocale(locale)
 
   const fetchAnalytics = async () => {
     setLoading(true)
@@ -48,10 +55,10 @@ export default function DashboardPage() {
     }
   }
 
-  const handleParse = async () => {
-    setParsing(true)
+  const handleParse = async (source: "dummyjson" | "fakestore") => {
+    setParsingSource(source)
     try {
-      const response = await fetch("/api/parse/dummyjson", {
+      const response = await fetch(`/api/parse/${source}`, {
         method: "POST",
       })
       if (!response.ok) throw new Error("Failed to parse data")
@@ -59,7 +66,7 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
-      setParsing(false)
+      setParsingSource(null)
     }
   }
 
@@ -71,7 +78,7 @@ export default function DashboardPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t.common.loading}</p>
         </div>
       </div>
     )
@@ -81,7 +88,7 @@ export default function DashboardPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
-          Error: {error}
+          {t.common.error}: {error}
         </div>
       </div>
     )
@@ -91,18 +98,31 @@ export default function DashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">{t.dashboard.title}</h1>
           <p className="text-muted-foreground">
-            Comprehensive analytics overview
+            {t.dashboard.subtitle}
           </p>
         </div>
-        <button
-          onClick={handleParse}
-          disabled={parsing}
-          className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          {parsing ? "Parsing..." : "Parse DummyJSON"}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => handleParse("dummyjson")}
+            disabled={!!parsingSource}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {parsingSource === "dummyjson"
+              ? t.dashboard.parsing
+              : t.dashboard.parseDummyJSON}
+          </button>
+          <button
+            onClick={() => handleParse("fakestore")}
+            disabled={!!parsingSource}
+            className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 transition-colors"
+          >
+            {parsingSource === "fakestore"
+              ? t.dashboard.parsing
+              : t.dashboard.parseFakeStore}
+          </button>
+        </div>
       </div>
 
       {analytics && (
@@ -111,49 +131,65 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="border border-border rounded-lg p-6 bg-card">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Total Products</p>
+                <p className="text-sm text-muted-foreground">{t.dashboard.totalProducts}</p>
                 <Package className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-3xl font-bold">{analytics.summary.totalProducts}</p>
               <p className="text-xs text-muted-foreground mt-2">
-                Across all sources
+                {t.dashboard.acrossAllSources}
               </p>
             </div>
 
             <div className="border border-border rounded-lg p-6 bg-card">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Average Price</p>
+                <p className="text-sm text-muted-foreground">{t.dashboard.averagePrice}</p>
                 <DollarSign className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-3xl font-bold">
-                ${analytics.summary.averagePrice?.toFixed(2) || "0.00"}
+                {formatCurrency(
+                  convertCurrency(analytics.summary.averagePrice || 0, "USD", currency),
+                  currency,
+                  locale
+                )}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                Price range: ${analytics.summary.minPrice?.toFixed(2) || "0.00"} - ${analytics.summary.maxPrice?.toFixed(2) || "0.00"}
+                {t.dashboard.priceRange}: {formatCurrency(
+                  convertCurrency(analytics.summary.minPrice || 0, "USD", currency),
+                  currency,
+                  locale
+                )} - {formatCurrency(
+                  convertCurrency(analytics.summary.maxPrice || 0, "USD", currency),
+                  currency,
+                  locale
+                )}
               </p>
             </div>
 
             <div className="border border-border rounded-lg p-6 bg-card">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Total Value</p>
+                <p className="text-sm text-muted-foreground">{t.dashboard.totalValue}</p>
                 <TrendingUp className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-3xl font-bold">
-                ${analytics.summary.totalValue?.toFixed(2) || "0.00"}
+                {formatCurrency(
+                  convertCurrency(analytics.summary.totalValue || 0, "USD", currency),
+                  currency,
+                  locale
+                )}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                Sum of all products
+                {t.dashboard.sumOfAllProducts}
               </p>
             </div>
 
             <div className="border border-border rounded-lg p-6 bg-card">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Data Sources</p>
+                <p className="text-sm text-muted-foreground">{t.dashboard.dataSources}</p>
                 <TrendingDown className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-3xl font-bold">{analytics.summary.totalSources}</p>
               <p className="text-xs text-muted-foreground mt-2">
-                Active sources
+                {t.dashboard.activeSources}
               </p>
             </div>
           </div>
@@ -163,13 +199,18 @@ export default function DashboardPage() {
             {/* Daily Stats */}
             {analytics.dailyStats && analytics.dailyStats.length > 0 && (
               <div className="border border-border rounded-lg p-6 bg-card">
-                <h2 className="text-xl font-semibold mb-4">7-Day Price Trends</h2>
+                <h2 className="text-xl font-semibold mb-4">{t.dashboard.sevenDayPriceTrends}</h2>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analytics.dailyStats}>
+                  <LineChart data={analytics.dailyStats.map((d: any) => ({
+                    ...d,
+                    avgPrice: convertCurrency(d.avgPrice, "USD", currency),
+                    minPrice: convertCurrency(d.minPrice, "USD", currency),
+                    maxPrice: convertCurrency(d.maxPrice, "USD", currency),
+                  }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip formatter={(value: number) => formatCurrency(value, currency, locale)} />
                     <Legend />
                     <Line
                       type="monotone"
@@ -200,7 +241,7 @@ export default function DashboardPage() {
             {/* Price Distribution */}
             {analytics.priceDistribution && analytics.priceDistribution.length > 0 && (
               <div className="border border-border rounded-lg p-6 bg-card">
-                <h2 className="text-xl font-semibold mb-4">Price Distribution</h2>
+                <h2 className="text-xl font-semibold mb-4">{t.dashboard.priceDistribution}</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -228,7 +269,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Products by Source */}
             <div className="border border-border rounded-lg p-6 bg-card">
-              <h2 className="text-xl font-semibold mb-4">Products by Source</h2>
+              <h2 className="text-xl font-semibold mb-4">{t.dashboard.productsBySource}</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={analytics.sources}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -244,10 +285,13 @@ export default function DashboardPage() {
             {/* Average Price by Category */}
             <div className="border border-border rounded-lg p-6 bg-card">
               <h2 className="text-xl font-semibold mb-4">
-                Average Price by Category
+                {t.dashboard.averagePriceByCategory}
               </h2>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.categories}>
+                <BarChart data={analytics.categories.map((cat: any) => ({
+                  ...cat,
+                  averagePrice: convertCurrency(cat.averagePrice || 0, "USD", currency),
+                }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="category"
@@ -256,7 +300,7 @@ export default function DashboardPage() {
                     height={100}
                   />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip formatter={(value: number) => formatCurrency(value, currency, locale)} />
                   <Legend />
                   <Bar
                     dataKey="averagePrice"
@@ -273,13 +317,18 @@ export default function DashboardPage() {
             {/* Source Price Statistics */}
             {analytics.sourcePriceStats && analytics.sourcePriceStats.length > 0 && (
               <div className="border border-border rounded-lg p-6 bg-card">
-                <h2 className="text-xl font-semibold mb-4">Source Price Analysis</h2>
+                <h2 className="text-xl font-semibold mb-4">{t.dashboard.sourcePriceAnalysis}</h2>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analytics.sourcePriceStats}>
+                  <BarChart data={analytics.sourcePriceStats.map((s: any) => ({
+                    ...s,
+                    averagePrice: convertCurrency(s.averagePrice || 0, "USD", currency),
+                    minPrice: convertCurrency(s.minPrice || 0, "USD", currency),
+                    maxPrice: convertCurrency(s.maxPrice || 0, "USD", currency),
+                  }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="source" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip formatter={(value: number) => formatCurrency(value, currency, locale)} />
                     <Legend />
                     <Bar dataKey="averagePrice" fill="hsl(var(--foreground))" name="Avg Price" />
                     <Bar dataKey="minPrice" fill="hsl(var(--muted-foreground))" name="Min Price" />
@@ -292,7 +341,7 @@ export default function DashboardPage() {
             {/* Top Categories */}
             {analytics.topCategories && analytics.topCategories.length > 0 && (
               <div className="border border-border rounded-lg p-6 bg-card">
-                <h2 className="text-xl font-semibold mb-4">Top Categories</h2>
+                <h2 className="text-xl font-semibold mb-4">{t.dashboard.topCategories}</h2>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={analytics.topCategories}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -312,18 +361,66 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Monthly Trends and Category Growth */}
+          {(analytics.monthlyTrends || analytics.categoryGrowth) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {analytics.monthlyTrends && analytics.monthlyTrends.length > 0 && (
+                <div className="border border-border rounded-lg p-6 bg-card">
+                  <h2 className="text-xl font-semibold mb-4">Месячные тренды</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analytics.monthlyTrends.map((m: any) => ({
+                      ...m,
+                      avgPrice: convertCurrency(m.avgPrice, "USD", currency),
+                      totalValue: convertCurrency(m.totalValue, "USD", currency),
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value: number) => formatCurrency(value, currency, locale)} />
+                      <Legend />
+                      <Bar dataKey="avgPrice" fill="hsl(var(--foreground))" name="Средняя цена" />
+                      <Bar dataKey="totalValue" fill="hsl(var(--muted-foreground))" name="Общая стоимость" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {analytics.categoryGrowth && analytics.categoryGrowth.length > 0 && (
+                <div className="border border-border rounded-lg p-6 bg-card">
+                  <h2 className="text-xl font-semibold mb-4">Рост категорий</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analytics.categoryGrowth}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="category"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="totalCount" fill="hsl(var(--foreground))" name="Количество" />
+                      <Bar dataKey="sourceCount" fill="hsl(var(--muted-foreground))" name="Источников" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Category Details Table */}
           <div className="border border-border rounded-lg p-6 bg-card mb-8">
-            <h2 className="text-xl font-semibold mb-4">Category Statistics</h2>
+            <h2 className="text-xl font-semibold mb-4">{t.dashboard.categoryStatistics}</h2>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-3">Category</th>
-                    <th className="text-left p-3">Count</th>
-                    <th className="text-left p-3">Avg Price</th>
-                    <th className="text-left p-3">Min Price</th>
-                    <th className="text-left p-3">Max Price</th>
+                    <th className="text-left p-3">{t.dashboard.category}</th>
+                    <th className="text-left p-3">{t.dashboard.count}</th>
+                    <th className="text-left p-3">{t.dashboard.avgPrice}</th>
+                    <th className="text-left p-3">{t.dashboard.minPrice}</th>
+                    <th className="text-left p-3">{t.dashboard.maxPrice}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -331,9 +428,27 @@ export default function DashboardPage() {
                     <tr key={cat.category} className="border-b border-border hover:bg-muted/50">
                       <td className="p-3 font-medium">{cat.category}</td>
                       <td className="p-3">{cat.count}</td>
-                      <td className="p-3">${cat.averagePrice?.toFixed(2) || "0.00"}</td>
-                      <td className="p-3">${cat.minPrice?.toFixed(2) || "0.00"}</td>
-                      <td className="p-3">${cat.maxPrice?.toFixed(2) || "0.00"}</td>
+                      <td className="p-3">
+                        {formatCurrency(
+                          convertCurrency(cat.averagePrice || 0, "USD", currency),
+                          currency,
+                          locale
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {formatCurrency(
+                          convertCurrency(cat.minPrice || 0, "USD", currency),
+                          currency,
+                          locale
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {formatCurrency(
+                          convertCurrency(cat.maxPrice || 0, "USD", currency),
+                          currency,
+                          locale
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -343,24 +458,30 @@ export default function DashboardPage() {
 
           {/* Recent Products */}
           <div className="border border-border rounded-lg p-6 bg-card">
-            <h2 className="text-xl font-semibold mb-4">Recent Products</h2>
+            <h2 className="text-xl font-semibold mb-4">{t.dashboard.recentProducts}</h2>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-3">Title</th>
-                    <th className="text-left p-3">Category</th>
-                    <th className="text-left p-3">Price</th>
-                    <th className="text-left p-3">Source</th>
-                    <th className="text-left p-3">Fetched At</th>
+                    <th className="text-left p-3">{t.dashboard.title}</th>
+                    <th className="text-left p-3">{t.dashboard.category}</th>
+                    <th className="text-left p-3">{t.dashboard.price}</th>
+                    <th className="text-left p-3">{t.dashboard.source}</th>
+                    <th className="text-left p-3">{t.dashboard.fetchedAt}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {analytics.recentProducts.map((product: any) => (
                     <tr key={product.id} className="border-b border-border hover:bg-muted/50">
-                      <td className="p-3">{product.title}</td>
+                      <td className="p-3">{translateProductName(product.title, locale)}</td>
                       <td className="p-3">{product.category}</td>
-                      <td className="p-3 font-medium">${product.price.toFixed(2)}</td>
+                      <td className="p-3 font-medium">
+                        {formatCurrency(
+                          convertCurrency(product.price, "USD", currency),
+                          currency,
+                          locale
+                        )}
+                      </td>
                       <td className="p-3">{product.source}</td>
                       <td className="p-3">
                         {new Date(product.fetchedAt).toLocaleString()}

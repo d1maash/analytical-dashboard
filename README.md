@@ -49,7 +49,7 @@ npm run dev
 1. Откройте http://localhost:3000
 2. Зарегистрируйте новый аккаунт или войдите в существующий
 3. Перейдите на Dashboard
-4. Нажмите "Parse DummyJSON" для загрузки данных
+4. Нажмите "Parse DummyJSON" или "Parse FakeStore" для загрузки данных
 5. Просматривайте расширенную аналитику, продукты и прогнозы
 
 ## Функции
@@ -63,6 +63,7 @@ npm run dev
 ## API Endpoints
 
 - `POST /api/parse/dummyjson` - Парсинг данных из DummyJSON
+- `POST /api/parse/fakestore` - Парсинг данных из FakeStore API
 - `GET /api/products` - Список продуктов
 - `GET /api/products/[id]` - Детали продукта
 - `GET /api/analytics` - Аналитика

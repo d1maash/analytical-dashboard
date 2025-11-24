@@ -48,6 +48,20 @@ interface Analytics {
     count: number
   }>
   topCategories?: Array<{ category: string; count: number }>
+  monthlyTrends?: Array<{
+    month: string
+    count: number
+    avgPrice: number
+    minPrice: number
+    maxPrice: number
+    totalValue: number
+  }>
+  categoryGrowth?: Array<{
+    category: string
+    totalCount: number
+    avgPrice: number
+    sourceCount: number
+  }>
 }
 
 interface StoreState {

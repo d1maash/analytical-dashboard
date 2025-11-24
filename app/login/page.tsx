@@ -4,9 +4,12 @@ import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { LanguageSelector } from "@/components/language-selector"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -28,7 +31,7 @@ export default function LoginPage() {
         })
 
         if (result?.error) {
-          setError("Invalid email or password")
+          setError(t.auth.invalidCredentials)
         } else {
           router.push("/dashboard")
           router.refresh()
@@ -43,7 +46,7 @@ export default function LoginPage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setError(data.error || "Registration failed")
+          setError(data.error || t.auth.registrationFailed)
         } else {
           // Auto login after registration
           const result = await signIn("credentials", {
@@ -59,7 +62,7 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      setError("An error occurred. Please try again.")
+      setError(t.common.error)
     } finally {
       setLoading(false)
     }
@@ -69,13 +72,14 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="border border-border rounded-lg p-8 bg-card">
+          <div className="flex justify-end mb-4">
+            <LanguageSelector />
+          </div>
           <h1 className="text-3xl font-bold mb-2 text-center">
-            {isLogin ? "Login" : "Register"}
+            {isLogin ? t.auth.signIn : t.auth.signUp}
           </h1>
           <p className="text-muted-foreground text-center mb-8">
-            {isLogin
-              ? "Sign in to your account"
-              : "Create a new account"}
+            {isLogin ? t.auth.signInToAccount : t.auth.createAccount}
           </p>
 
           {error && (
@@ -91,7 +95,7 @@ export default function LoginPage() {
                   htmlFor="name"
                   className="block text-sm font-medium mb-2"
                 >
-                  Name (optional)
+                  {t.auth.nameOptional}
                 </label>
                 <input
                   id="name"
@@ -108,7 +112,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium mb-2"
               >
-                Email
+                {t.auth.email}
               </label>
               <input
                 id="email"
@@ -125,7 +129,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium mb-2"
               >
-                Password
+                {t.auth.password}
               </label>
               <input
                 id="password"
@@ -144,10 +148,10 @@ export default function LoginPage() {
               className="w-full px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
-                ? "Loading..."
+                ? t.common.loading
                 : isLogin
-                ? "Sign In"
-                : "Sign Up"}
+                ? t.auth.signIn
+                : t.auth.signUp}
             </button>
           </form>
 
@@ -160,9 +164,7 @@ export default function LoginPage() {
               }}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
+              {isLogin ? t.auth.dontHaveAccount : t.auth.alreadyHaveAccount}
             </button>
           </div>
         </div>

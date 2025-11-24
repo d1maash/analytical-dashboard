@@ -16,6 +16,8 @@ export async function GET() {
       dailyStats,
       sourcePriceStats,
       categoryCounts,
+      monthlyTrends,
+      categoryGrowth,
     ] = await Promise.all([
       prisma.productExternalData.count(),
       prisma.productExternalData.groupBy({
@@ -92,6 +94,32 @@ export async function GET() {
         orderBy: { _count: { category: "desc" } },
         take: 10,
       }),
+      // Price trends by month
+      prisma.$queryRaw`
+        SELECT 
+          TO_CHAR("fetchedAt", 'YYYY-MM') as month,
+          COUNT(*) as count,
+          AVG("price") as avg_price,
+          MIN("price") as min_price,
+          MAX("price") as max_price,
+          SUM("price") as total_value
+        FROM "ProductExternalData"
+        WHERE "fetchedAt" >= NOW() - INTERVAL '6 months'
+        GROUP BY TO_CHAR("fetchedAt", 'YYYY-MM')
+        ORDER BY month DESC
+      `,
+      // Category growth
+      prisma.$queryRaw`
+        SELECT 
+          "category",
+          COUNT(*) as total_count,
+          AVG("price") as avg_price,
+          COUNT(DISTINCT "source") as source_count
+        FROM "ProductExternalData"
+        GROUP BY "category"
+        ORDER BY total_count DESC
+        LIMIT 15
+      `,
     ])
 
     // Calculate price range
@@ -149,6 +177,20 @@ export async function GET() {
       topCategories: categoryCounts.map((c) => ({
         category: c.category,
         count: c._count,
+      })),
+      monthlyTrends: (monthlyTrends as any[]).map((m: any) => ({
+        month: m.month,
+        count: Number(m.count),
+        avgPrice: Number(m.avg_price),
+        minPrice: Number(m.min_price),
+        maxPrice: Number(m.max_price),
+        totalValue: Number(m.total_value),
+      })),
+      categoryGrowth: (categoryGrowth as any[]).map((c: any) => ({
+        category: c.category,
+        totalCount: Number(c.total_count),
+        avgPrice: Number(c.avg_price),
+        sourceCount: Number(c.source_count),
       })),
     })
   } catch (error) {

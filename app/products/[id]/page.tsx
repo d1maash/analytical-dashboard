@@ -11,7 +11,13 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  Bar,
 } from "recharts"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import { translateProductName } from "@/lib/translations/products"
 
 interface Product {
   id: string
@@ -31,12 +37,25 @@ interface Forecast {
     id: string
     title: string
     currentPrice: number
+    category: string
   }
-  forecast: {
+  priceForecast: {
     forecast: number
     confidence: number
     min: number
     max: number
+  }
+  salesForecast: {
+    forecastPrice: number
+    forecastSales: number
+    confidence: number
+    priceRange: {
+      min: number
+      max: number
+    }
+    trend: "rising" | "falling" | "stable"
+    growthRate: number
+    predictedRevenue: number
   }
   history: Array<{
     price: number
@@ -47,6 +66,8 @@ interface Forecast {
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { t, locale } = useLanguage()
+  const currency = getCurrencyForLocale(locale)
   const [product, setProduct] = useState<Product | null>(null)
   const [forecast, setForecast] = useState<Forecast | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,7 +107,7 @@ export default function ProductDetailPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t.common.loading}</p>
         </div>
       </div>
     )
@@ -96,13 +117,13 @@ export default function ProductDetailPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded">
-          Error: {error || "Product not found"}
+          {t.common.error}: {error || "Product not found"}
         </div>
         <button
           onClick={() => router.back()}
           className="mt-4 px-4 py-2 border border-border rounded hover:bg-accent"
         >
-          Go Back
+          {t.common.back}
         </button>
       </div>
     )
@@ -110,8 +131,30 @@ export default function ProductDetailPage() {
 
   const chartData = forecast?.history.map((h) => ({
     date: new Date(h.date).toLocaleDateString(),
-    price: h.price,
+    price: convertCurrency(h.price, "USD", currency),
   })) || []
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "rising":
+        return <TrendingUp className="h-5 w-5 text-green-600" />
+      case "falling":
+        return <TrendingDown className="h-5 w-5 text-red-600" />
+      default:
+        return <Minus className="h-5 w-5 text-gray-600" />
+    }
+  }
+
+  const getTrendText = (trend: string) => {
+    switch (trend) {
+      case "rising":
+        return t.products.trend.rising
+      case "falling":
+        return t.products.trend.falling
+      default:
+        return t.products.trend.stable
+    }
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -119,7 +162,7 @@ export default function ProductDetailPage() {
         onClick={() => router.back()}
         className="mb-4 text-muted-foreground hover:text-foreground"
       >
-        ← Back
+        ← {t.common.back}
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -127,32 +170,34 @@ export default function ProductDetailPage() {
           {product.image && (
             <img
               src={product.image}
-              alt={product.title}
+              alt={translateProductName(product.title, locale)}
               className="w-full h-96 object-cover rounded-lg mb-4"
             />
           )}
         </div>
         <div>
-          <h1 className="text-3xl font-bold mb-4">{product.title}</h1>
+          <h1 className="text-3xl font-bold mb-4">{translateProductName(product.title, locale)}</h1>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground">Category</p>
+              <p className="text-sm text-muted-foreground">{t.dashboard.category}</p>
               <p className="text-lg">{product.category}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Price</p>
-              <p className="text-3xl font-bold">${product.price.toFixed(2)}</p>
+              <p className="text-sm text-muted-foreground">{t.dashboard.price}</p>
+              <p className="text-3xl font-bold">
+                {formatCurrency(
+                  convertCurrency(product.price, "USD", currency),
+                  currency,
+                  locale
+                )}
+              </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Source</p>
+              <p className="text-sm text-muted-foreground">{t.dashboard.source}</p>
               <p className="text-lg">{product.source}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">External ID</p>
-              <p className="text-lg font-mono text-sm">{product.externalId}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Fetched At</p>
+              <p className="text-sm text-muted-foreground">{t.dashboard.fetchedAt}</p>
               <p className="text-lg">
                 {new Date(product.fetchedAt).toLocaleString()}
               </p>
@@ -162,53 +207,139 @@ export default function ProductDetailPage() {
       </div>
 
       {forecast && (
-        <div className="border border-border rounded-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Price Forecast</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="border border-border rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Forecast</p>
-              <p className="text-2xl font-bold">
-                ${forecast.forecast.forecast.toFixed(2)}
-              </p>
+        <>
+          {/* Price Forecast */}
+          <div className="border border-border rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t.products.forecast}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">{t.products.forecastPrice}</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(
+                    convertCurrency(forecast.priceForecast.forecast, "USD", currency),
+                    currency,
+                    locale
+                  )}
+                </p>
+              </div>
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">{t.products.confidence}</p>
+                <p className="text-2xl font-bold">
+                  {(forecast.priceForecast.confidence * 100).toFixed(1)}%
+                </p>
+              </div>
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">{t.products.priceRange}</p>
+                <p className="text-lg">
+                  {formatCurrency(
+                    convertCurrency(forecast.priceForecast.min, "USD", currency),
+                    currency,
+                    locale
+                  )} - {formatCurrency(
+                    convertCurrency(forecast.priceForecast.max, "USD", currency),
+                    currency,
+                    locale
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="border border-border rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Confidence</p>
-              <p className="text-2xl font-bold">
-                {(forecast.forecast.confidence * 100).toFixed(1)}%
-              </p>
-            </div>
-            <div className="border border-border rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Range</p>
-              <p className="text-lg">
-                ${forecast.forecast.min.toFixed(2)} - $
-                {forecast.forecast.max.toFixed(2)}
-              </p>
-            </div>
+
+            {chartData.length > 0 && (
+              <div>
+                <h3 className="text-xl font-semibold mb-4">{t.dashboard.sevenDayPriceTrends}</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="price"
+                      stroke="hsl(var(--foreground))"
+                      name={t.dashboard.price}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
-          {chartData.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Price History</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="price"
-                    stroke="hsl(var(--foreground))"
-                    name="Price"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+          {/* Sales Forecast */}
+          <div className="border border-border rounded-lg p-6 mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t.products.salesForecast}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">{t.products.predictedSales}</p>
+                <p className="text-2xl font-bold">
+                  {forecast.salesForecast.forecastSales} {t.products.units}
+                </p>
+              </div>
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">{t.products.forecastPrice}</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(
+                    convertCurrency(forecast.salesForecast.forecastPrice, "USD", currency),
+                    currency,
+                    locale
+                  )}
+                </p>
+              </div>
+              <div className="border border-border rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-sm text-muted-foreground">{t.products.trend}</p>
+                  {getTrendIcon(forecast.salesForecast.trend)}
+                </div>
+                <p className="text-xl font-bold">{getTrendText(forecast.salesForecast.trend)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {forecast.salesForecast.growthRate > 0 ? "+" : ""}
+                  {forecast.salesForecast.growthRate.toFixed(1)}%
+                </p>
+              </div>
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">Прогнозируемая выручка</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(
+                    convertCurrency(forecast.salesForecast.predictedRevenue, "USD", currency),
+                    currency,
+                    locale
+                  )}
+                </p>
+              </div>
             </div>
-          )}
-        </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-2">{t.products.confidence}</p>
+                <div className="w-full bg-muted rounded-full h-2.5">
+                  <div
+                    className="bg-primary h-2.5 rounded-full"
+                    style={{ width: `${forecast.salesForecast.confidence * 100}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm mt-1">
+                  {(forecast.salesForecast.confidence * 100).toFixed(1)}%
+                </p>
+              </div>
+              <div className="border border-border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground mb-1">{t.products.priceRange}</p>
+                <p className="text-lg">
+                  {formatCurrency(
+                    convertCurrency(forecast.salesForecast.priceRange.min, "USD", currency),
+                    currency,
+                    locale
+                  )} - {formatCurrency(
+                    convertCurrency(forecast.salesForecast.priceRange.max, "USD", currency),
+                    currency,
+                    locale
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
 }
-

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import { useStore } from "@/store/useStore"
 import Link from "next/link"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import { translateProductName } from "@/lib/translations/products"
 
 interface Product {
   id: string
@@ -16,6 +19,8 @@ interface Product {
 }
 
 export default function ProductsPage() {
+  const { t, locale } = useLanguage()
+  const currency = getCurrencyForLocale(locale)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,7 +66,7 @@ export default function ProductsPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t.common.loading}</p>
         </div>
       </div>
     )
@@ -69,7 +74,7 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Products</h1>
+      <h1 className="text-3xl font-bold mb-8">{t.products.title}</h1>
 
       <div className="flex gap-4 mb-6">
         <select
@@ -77,7 +82,7 @@ export default function ProductsPage() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="border border-border rounded px-4 py-2 bg-background"
         >
-          <option value="">All Categories</option>
+          <option value="">{t.products.allCategories}</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
@@ -90,7 +95,7 @@ export default function ProductsPage() {
           onChange={(e) => setSourceFilter(e.target.value)}
           className="border border-border rounded px-4 py-2 bg-background"
         >
-          <option value="">All Sources</option>
+          <option value="">{t.products.allSources}</option>
           {sources.map((src) => (
             <option key={src} value={src}>
               {src}
@@ -101,7 +106,7 @@ export default function ProductsPage() {
 
       {error && (
         <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded mb-4">
-          Error: {error}
+          {t.common.error}: {error}
         </div>
       )}
 
@@ -120,14 +125,20 @@ export default function ProductsPage() {
               />
             )}
             <h2 className="text-lg font-semibold mb-2 line-clamp-2">
-              {product.title}
+              {translateProductName(product.title, locale)}
             </h2>
             <p className="text-sm text-muted-foreground mb-2">
               {product.category}
             </p>
-            <p className="text-xl font-bold">${product.price.toFixed(2)}</p>
+            <p className="text-xl font-bold">
+              {formatCurrency(
+                convertCurrency(product.price, "USD", currency),
+                currency,
+                locale
+              )}
+            </p>
             <p className="text-xs text-muted-foreground mt-2">
-              Source: {product.source}
+              {t.dashboard.source}: {product.source}
             </p>
           </Link>
         ))}
@@ -135,7 +146,7 @@ export default function ProductsPage() {
 
       {products.length === 0 && !loading && (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No products found</p>
+          <p className="text-muted-foreground">{t.products.noProductsFound}</p>
         </div>
       )}
     </div>

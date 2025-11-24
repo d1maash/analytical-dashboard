@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { forecastWithConfidence } from "@/lib/forecast/forecastEngine"
+import { calculateSalesForecast } from "@/lib/forecast/salesForecast"
 import { requireAuth } from "@/lib/auth-helpers"
 
 export async function GET(
@@ -46,15 +47,18 @@ export async function GET(
       )
     }
 
-    const forecast = forecastWithConfidence(history)
+    const priceForecast = forecastWithConfidence(history)
+    const salesForecast = calculateSalesForecast(history)
 
     return NextResponse.json({
       product: {
         id: product.id,
         title: product.title,
         currentPrice: product.price,
+        category: product.category,
       },
-      forecast,
+      priceForecast,
+      salesForecast,
       history: history.map((h) => ({
         price: h.price,
         date: h.fetchedAt,

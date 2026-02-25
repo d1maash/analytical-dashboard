@@ -18,6 +18,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
+import { translateCategory, translateSource } from "@/lib/translations/categories"
 
 interface Product {
   id: string
@@ -180,7 +181,7 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">{t.dashboard.category}</p>
-              <p className="text-lg">{product.category}</p>
+              <p className="text-lg">{translateCategory(product.category, locale)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t.dashboard.price}</p>
@@ -194,7 +195,7 @@ export default function ProductDetailPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t.dashboard.source}</p>
-              <p className="text-lg">{product.source}</p>
+              <p className="text-lg">{translateSource(product.source, locale)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t.dashboard.fetchedAt}</p>

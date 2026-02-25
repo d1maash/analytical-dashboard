@@ -23,6 +23,7 @@ import { TrendingUp, TrendingDown, Package, DollarSign } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
+import { translateCategory, translateSource } from "@/lib/translations/categories"
 
 const COLORS = [
   "hsl(var(--foreground))",
@@ -268,7 +269,10 @@ export default function DashboardPage() {
             <div className="border border-border rounded-lg p-6 bg-card">
               <h2 className="text-xl font-semibold mb-4">{t.dashboard.productsBySource}</h2>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.sources}>
+                <BarChart data={analytics.sources.map((s: any) => ({
+                    ...s,
+                    source: translateSource(s.source, locale),
+                  }))}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="source" />
                   <YAxis />
@@ -287,6 +291,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={analytics.categories.map((cat: any) => ({
                   ...cat,
+                  category: translateCategory(cat.category, locale),
                   averagePrice: convertCurrency(cat.averagePrice || 0, "USD", currency),
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -318,6 +323,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={analytics.sourcePriceStats.map((s: any) => ({
                     ...s,
+                    source: translateSource(s.source, locale),
                     averagePrice: convertCurrency(s.averagePrice || 0, "USD", currency),
                     minPrice: convertCurrency(s.minPrice || 0, "USD", currency),
                     maxPrice: convertCurrency(s.maxPrice || 0, "USD", currency),
@@ -340,7 +346,10 @@ export default function DashboardPage() {
               <div className="border border-border rounded-lg p-6 bg-card">
                 <h2 className="text-xl font-semibold mb-4">{t.dashboard.topCategories}</h2>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analytics.topCategories}>
+                  <BarChart data={analytics.topCategories.map((c: any) => ({
+                      ...c,
+                      category: translateCategory(c.category, locale),
+                    }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="category"
@@ -386,7 +395,10 @@ export default function DashboardPage() {
                 <div className="border border-border rounded-lg p-6 bg-card">
                   <h2 className="text-xl font-semibold mb-4">Рост категорий</h2>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={analytics.categoryGrowth}>
+                    <BarChart data={analytics.categoryGrowth.map((c: any) => ({
+                        ...c,
+                        category: translateCategory(c.category, locale),
+                      }))}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey="category"
@@ -423,7 +435,7 @@ export default function DashboardPage() {
                 <tbody>
                   {analytics.categories.map((cat: any) => (
                     <tr key={cat.category} className="border-b border-border hover:bg-muted/50">
-                      <td className="p-3 font-medium">{cat.category}</td>
+                      <td className="p-3 font-medium">{translateCategory(cat.category, locale)}</td>
                       <td className="p-3">{cat.count}</td>
                       <td className="p-3">
                         {formatCurrency(
@@ -471,7 +483,7 @@ export default function DashboardPage() {
                   {analytics.recentProducts.map((product: any) => (
                     <tr key={product.id} className="border-b border-border hover:bg-muted/50">
                       <td className="p-3">{translateProductName(product.title, locale)}</td>
-                      <td className="p-3">{product.category}</td>
+                      <td className="p-3">{translateCategory(product.category, locale)}</td>
                       <td className="p-3 font-medium">
                         {formatCurrency(
                           convertCurrency(product.price, "USD", currency),
@@ -479,7 +491,7 @@ export default function DashboardPage() {
                           locale
                         )}
                       </td>
-                      <td className="p-3">{product.source}</td>
+                      <td className="p-3">{translateSource(product.source, locale)}</td>
                       <td className="p-3">
                         {new Date(product.fetchedAt).toLocaleString()}
                       </td>

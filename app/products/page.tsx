@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
+import { translateCategory, translateSource } from "@/lib/translations/categories"
 
 interface Product {
   id: string
@@ -85,7 +86,7 @@ export default function ProductsPage() {
           <option value="">{t.products.allCategories}</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>
-              {cat}
+              {translateCategory(cat, locale)}
             </option>
           ))}
         </select>
@@ -98,7 +99,7 @@ export default function ProductsPage() {
           <option value="">{t.products.allSources}</option>
           {sources.map((src) => (
             <option key={src} value={src}>
-              {src}
+              {translateSource(src, locale)}
             </option>
           ))}
         </select>
@@ -128,7 +129,7 @@ export default function ProductsPage() {
               {translateProductName(product.title, locale)}
             </h2>
             <p className="text-sm text-muted-foreground mb-2">
-              {product.category}
+              {translateCategory(product.category, locale)}
             </p>
             <p className="text-xl font-bold">
               {formatCurrency(
@@ -138,7 +139,7 @@ export default function ProductsPage() {
               )}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              {t.dashboard.source}: {product.source}
+              {t.dashboard.source}: {translateSource(product.source, locale)}
             </p>
           </Link>
         ))}

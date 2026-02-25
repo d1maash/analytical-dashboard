@@ -56,9 +56,11 @@ export default function DashboardPage() {
   const handleParse = async () => {
     setParsing(true)
     try {
-      const sources: Array<"dummyjson" | "fakestore"> = [
+      const sources = [
         "dummyjson",
         "fakestore",
+        "airconditioners",
+        "waterfilters",
       ]
 
       for (const source of sources) {

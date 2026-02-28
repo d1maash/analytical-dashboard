@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import { translateCategory, translateSource } from "@/lib/translations/categories"
 
 interface SourceStats {
   source: string
@@ -115,8 +116,8 @@ export default function SourcesPage() {
             key={source.source}
             className="border border-border rounded-lg p-6"
           >
-            <h2 className="text-2xl font-semibold mb-4 capitalize">
-              {source.source}
+            <h2 className="text-2xl font-semibold mb-4">
+              {translateSource(source.source, locale)}
             </h2>
             <div className="space-y-3">
               <div>
@@ -165,7 +166,7 @@ export default function SourcesPage() {
                       key={cat}
                       className="px-2 py-1 bg-muted rounded text-xs"
                     >
-                      {cat}
+                      {translateCategory(cat, locale)}
                     </span>
                   ))}
                   {source.categories.length > 5 && (

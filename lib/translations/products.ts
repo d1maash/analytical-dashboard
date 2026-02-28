@@ -539,23 +539,73 @@ const productTranslations: Record<string, { ru: string; en: string }> = {
   "Throat Protection": { ru: "Защита горла", en: "Throat Protection" },
   "Gorget": { ru: "Горжет", en: "Gorget" },
   "Bevor": { ru: "Бевор", en: "Bevor" },
-  "Bevor": { ru: "Бевор", en: "Bevor" },
+
+  // Кондиционеры
+  "Samsung AR09 Инверторная сплит-система": { ru: "Samsung AR09 Инверторная сплит-система", en: "Samsung AR09 Inverter Split System" },
+  "LG P09SP2 Двойной инвертор": { ru: "LG P09SP2 Двойной инвертор", en: "LG P09SP2 Dual Inverter" },
+  "Daikin FTXB25C Настенная сплит-система": { ru: "Daikin FTXB25C Настенная сплит-система", en: "Daikin FTXB25C Wall-Mounted Split System" },
+  "Midea Blanc Сплит-система": { ru: "Midea Blanc Сплит-система", en: "Midea Blanc Split System" },
+  "Haier Nordic Инвертор": { ru: "Haier Nordic Инвертор", en: "Haier Nordic Inverter" },
+  "Gree Bora Сплит-система": { ru: "Gree Bora Сплит-система", en: "Gree Bora Split System" },
+  "Mitsubishi Electric Премиум инвертор": { ru: "Mitsubishi Electric Премиум инвертор", en: "Mitsubishi Electric Premium Inverter" },
+  "Ballu Мобильный кондиционер": { ru: "Ballu Мобильный кондиционер", en: "Ballu Portable Air Conditioner" },
+  "Toshiba Seiya Инвертор": { ru: "Toshiba Seiya Инвертор", en: "Toshiba Seiya Inverter" },
+  "Panasonic Etherea Инвертор": { ru: "Panasonic Etherea Инвертор", en: "Panasonic Etherea Inverter" },
+  "Electrolux Lounge Сплит-система": { ru: "Electrolux Lounge Сплит-система", en: "Electrolux Lounge Split System" },
+  "Hisense Energy Pro Инвертор": { ru: "Hisense Energy Pro Инвертор", en: "Hisense Energy Pro Inverter" },
+  "AUX Freedom Сплит-система": { ru: "AUX Freedom Сплит-система", en: "AUX Freedom Split System" },
+  "Zanussi Paradiso Сплит-система": { ru: "Zanussi Paradiso Сплит-система", en: "Zanussi Paradiso Split System" },
+  "Fujitsu Премиум инвертор": { ru: "Fujitsu Премиум инвертор", en: "Fujitsu Premium Inverter" },
+  "Cooper&Hunter Alpha Инвертор": { ru: "Cooper&Hunter Alpha Инвертор", en: "Cooper&Hunter Alpha Inverter" },
+  "General Climate Мульти-сплит система": { ru: "General Climate Мульти-сплит система", en: "General Climate Multi-Split System" },
+  "Kentatsu Bravo Сплит-система": { ru: "Kentatsu Bravo Сплит-система", en: "Kentatsu Bravo Split System" },
+  "Royal Clima Vela Nuova Инвертор": { ru: "Royal Clima Vela Nuova Инвертор", en: "Royal Clima Vela Nuova Inverter" },
+  "Carrier Кассетный кондиционер": { ru: "Carrier Кассетный кондиционер", en: "Carrier Cassette Air Conditioner" },
+
+  // Фильтры для воды
+  "Аквафор DWM-101S Морион": { ru: "Аквафор DWM-101S Морион", en: "Aquaphor DWM-101S Morion" },
+  "Барьер Профи Осмо 100": { ru: "Барьер Профи Осмо 100", en: "Barrier Profi Osmo 100" },
+  "Brita Marella XL Кувшин 3.5л": { ru: "Brita Marella XL Кувшин 3.5л", en: "Brita Marella XL Pitcher 3.5L" },
+  "Аквафор Кристалл Эко Н": { ru: "Аквафор Кристалл Эко Н", en: "Aquaphor Crystal Eco H" },
+  "Гейзер Нанотек": { ru: "Гейзер Нанотек", en: "Geyser Nanotech" },
+  "Барьер Expert Standard": { ru: "Барьер Expert Standard", en: "Barrier Expert Standard" },
+  "Honeywell Промывной магистральный": { ru: "Honeywell Промывной магистральный", en: "Honeywell Backwash Whole-House Filter" },
+  "Аквафор Фаворит B150": { ru: "Аквафор Фаворит B150", en: "Aquaphor Favorit B150" },
+  "Brita On Tap Насадка на кран": { ru: "Brita On Tap Насадка на кран", en: "Brita On Tap Faucet Filter" },
+  "Гейзер Престиж М": { ru: "Гейзер Престиж М", en: "Geyser Prestige M" },
+  "Atoll A-550m STD Компакт": { ru: "Atoll A-550m STD Компакт", en: "Atoll A-550m STD Compact" },
+  "Барьер Гранд NEO Кувшин 4.2л": { ru: "Барьер Гранд NEO Кувшин 4.2л", en: "Barrier Grand NEO Pitcher 4.2L" },
+  "Аквафор Трио Норма": { ru: "Аквафор Трио Норма", en: "Aquaphor Trio Norma" },
+  "BWT Penguin Кувшин с магнием 2.7л": { ru: "BWT Penguin Кувшин с магнием 2.7л", en: "BWT Penguin Magnesium Pitcher 2.7L" },
+  "Fibos Угольный магистральный фильтр": { ru: "Fibos Угольный магистральный фильтр", en: "Fibos Carbon Whole-House Filter" },
+  "Prio Новая Вода Expert M312": { ru: "Prio Новая Вода Expert M312", en: "Prio Novaya Voda Expert M312" },
+  "Гейзер Био 321 Для жёсткой воды": { ru: "Гейзер Био 321 Для жёсткой воды", en: "Geyser Bio 321 For Hard Water" },
+  "Ecosoft P'URE AquaCalcium": { ru: "Ecosoft P'URE AquaCalcium", en: "Ecosoft P'URE AquaCalcium" },
+  "Аквафор Осмо-Кристалл 100": { ru: "Аквафор Осмо-Кристалл 100", en: "Aquaphor Osmo-Crystal 100" },
+  "iSpring RCC7AK 6-ступенчатый": { ru: "iSpring RCC7AK 6-ступенчатый", en: "iSpring RCC7AK 6-Stage" },
 }
 
-// Функция для перевода названия товара
+const reverseMap = new Map<string, string>()
+for (const [key, val] of Object.entries(productTranslations)) {
+  if (val.ru && val.ru !== key) {
+    reverseMap.set(val.ru, val.en)
+  }
+}
+
 export function translateProductName(title: string, locale: string): string {
-  if (locale === "en") return title
-  
-  // Ищем точное совпадение
   const exactMatch = productTranslations[title]
   if (exactMatch) {
-    return exactMatch.ru
+    return locale === "en" ? exactMatch.en : exactMatch.ru
   }
-  
-  // Ищем частичное совпадение (слово в названии)
+
+  if (locale === "en") {
+    const enFromReverse = reverseMap.get(title)
+    if (enFromReverse) return enFromReverse
+    return title
+  }
+
   const words = title.split(/\s+/)
   const translatedWords = words.map(word => {
-    // Убираем знаки препинания для поиска
     const cleanWord = word.replace(/[.,!?;:]/g, "")
     const match = productTranslations[cleanWord]
     if (match) {
@@ -563,7 +613,7 @@ export function translateProductName(title: string, locale: string): string {
     }
     return word
   })
-  
+
   return translatedWords.join(" ")
 }
 

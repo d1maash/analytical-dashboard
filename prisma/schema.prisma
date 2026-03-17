@@ -73,9 +73,23 @@ model ProductExternalData {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  productImage ProductImage?
+
   @@index([externalId])
   @@index([source])
   @@index([category])
   @@index([fetchedAt])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String   @unique
+  data      Bytes
+  mimeType  String
+  fileName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product ProductExternalData @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 

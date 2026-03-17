@@ -15,6 +15,11 @@ export async function GET(
   try {
     const product = await prisma.productExternalData.findUnique({
       where: { id: params.id },
+      include: {
+        productImage: {
+          select: { id: true, mimeType: true, fileName: true, updatedAt: true },
+        },
+      },
     })
 
     if (!product) {
@@ -24,7 +29,11 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(product)
+    const { productImage, ...productData } = product
+    return NextResponse.json({
+      ...productData,
+      hasCustomImage: !!productImage,
+    })
   } catch (error) {
     console.error("Error fetching product:", error)
     return NextResponse.json(

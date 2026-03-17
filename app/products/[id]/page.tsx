@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
   LineChart,
@@ -15,7 +15,7 @@ import {
   Bar,
 } from "recharts"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { TrendingUp, TrendingDown, Minus, Upload, Trash2, ImageIcon } from "lucide-react"
 import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
 import { translateCategory, translateSource } from "@/lib/translations/categories"
@@ -31,6 +31,7 @@ interface Product {
   fetchedAt: string
   createdAt: string
   updatedAt: string
+  hasCustomImage?: boolean
 }
 
 interface Forecast {
@@ -73,19 +74,27 @@ export default function ProductDetailPage() {
   const [forecast, setForecast] = useState<Forecast | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [imageMessage, setImageMessage] = useState<string | null>(null)
+  const [imageKey, setImageKey] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const fetchProduct = async () => {
+    const res = await fetch(`/api/products/${params.id}`)
+    if (!res.ok) throw new Error("Failed to fetch product")
+    return res.json()
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       setError(null)
       try {
-        const [productRes, forecastRes] = await Promise.all([
-          fetch(`/api/products/${params.id}`),
+        const [productData, forecastRes] = await Promise.all([
+          fetchProduct(),
           fetch(`/api/forecast/${params.id}`),
         ])
 
-        if (!productRes.ok) throw new Error("Failed to fetch product")
-        const productData = await productRes.json()
         setProduct(productData)
 
         if (forecastRes.ok) {
@@ -103,6 +112,61 @@ export default function ProductDetailPage() {
       fetchData()
     }
   }, [params.id])
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setImageMessage(null)
+
+    const formData = new FormData()
+    formData.append("image", file)
+
+    try {
+      const res = await fetch(`/api/products/${params.id}/image`, {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || t.products.uploadError)
+      }
+
+      const updatedProduct = await fetchProduct()
+      setProduct(updatedProduct)
+      setImageKey((k) => k + 1)
+      setImageMessage(t.products.imageUploaded)
+    } catch (err) {
+      setImageMessage(err instanceof Error ? err.message : t.products.uploadError)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
+  const handleImageDelete = async () => {
+    setUploading(true)
+    setImageMessage(null)
+
+    try {
+      const res = await fetch(`/api/products/${params.id}/image`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) throw new Error("Failed to delete image")
+
+      const updatedProduct = await fetchProduct()
+      setProduct(updatedProduct)
+      setImageKey((k) => k + 1)
+      setImageMessage(t.products.imageDeleted)
+    } catch (err) {
+      setImageMessage(err instanceof Error ? err.message : t.products.uploadError)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -168,12 +232,61 @@ export default function ProductDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div>
-          {product.image && (
+          {product.hasCustomImage ? (
+            <img
+              key={imageKey}
+              src={`/api/products/${product.id}/image?v=${imageKey}`}
+              alt={translateProductName(product.title, locale)}
+              className="w-full h-96 object-cover rounded-lg mb-4"
+            />
+          ) : product.image ? (
             <img
               src={product.image}
               alt={translateProductName(product.title, locale)}
               className="w-full h-96 object-cover rounded-lg mb-4"
             />
+          ) : (
+            <div className="w-full h-96 bg-muted rounded-lg mb-4 flex items-center justify-center">
+              <ImageIcon className="h-16 w-16 text-muted-foreground" />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 disabled:opacity-50"
+            >
+              <Upload className="h-4 w-4" />
+              {uploading
+                ? t.common.loading
+                : product.hasCustomImage
+                  ? t.products.changeImage
+                  : t.products.uploadImage}
+            </button>
+            {product.hasCustomImage && (
+              <button
+                onClick={handleImageDelete}
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2 border border-destructive text-destructive rounded hover:bg-destructive/10 disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t.products.deleteImage}
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t.products.allowedFormats} · {t.products.maxFileSize}
+          </p>
+          {imageMessage && (
+            <p className="text-sm mt-1 text-muted-foreground">{imageMessage}</p>
           )}
         </div>
         <div>
@@ -289,7 +402,7 @@ export default function ProductDetailPage() {
               </div>
               <div className="border border-border rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm text-muted-foreground">{t.products.trend}</p>
+                  <p className="text-sm text-muted-foreground">{t.products.trend.label}</p>
                   {getTrendIcon(forecast.salesForecast.trend)}
                 </div>
                 <p className="text-xl font-bold">{getTrendText(forecast.salesForecast.trend)}</p>

@@ -10,11 +10,31 @@ interface FakeStoreProduct {
 
 type FakeStoreResponse = FakeStoreProduct[]
 
+const FAKESTORE_URL = "https://fakestoreapi.com/products"
+
+async function fetchWithRetries(url: string, attempts = 3): Promise<Response> {
+  let last: Response | null = null
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 1000 * i))
+    last = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "AnalyticalDashboard/1.0",
+      },
+      next: { revalidate: 0 },
+    })
+    if (last.ok) return last
+  }
+  return last!
+}
+
 export async function parseFakeStore(): Promise<NormalizedProduct[]> {
-  const response = await fetch("https://fakestoreapi.com/products")
+  const response = await fetchWithRetries(FAKESTORE_URL)
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch FakeStore: ${response.statusText}`)
+    throw new Error(
+      `Fake Store недоступен (HTTP ${response.status}) — остальные источники всё равно загрузятся`
+    )
   }
 
   const products: FakeStoreResponse = await response.json()

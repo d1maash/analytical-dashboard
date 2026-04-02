@@ -21,7 +21,12 @@ import {
 } from "recharts"
 import { TrendingUp, TrendingDown, Package, DollarSign } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import {
+  convertCurrency,
+  formatCurrency,
+  getCurrencyForLocale,
+  getStoredPriceCurrency,
+} from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
 import { translateCategory, translateSource } from "@/lib/translations/categories"
 
@@ -56,24 +61,44 @@ export default function DashboardPage() {
 
   const handleParse = async () => {
     setParsing(true)
+    setError(null)
     try {
-      const sources = [
-        "dummyjson",
-        "fakestore",
-        "airconditioners",
-        "waterfilters",
-      ]
+      const cleanupRes = await fetch("/api/parse/cleanup-dummy", {
+        method: "POST",
+      })
+      if (!cleanupRes.ok) {
+        const body = await cleanupRes.json().catch(() => ({}))
+        throw new Error(body?.error || "Не удалось очистить старые демо-товары")
+      }
 
+      const sources = ["airconditioners", "waterfilters"] as const
+
+      const failures: string[] = []
       for (const source of sources) {
         const response = await fetch(`/api/parse/${source}`, {
           method: "POST",
         })
         if (!response.ok) {
-          throw new Error(`Failed to parse ${source}`)
+          let detail = response.statusText || String(response.status)
+          try {
+            const body = await response.json()
+            if (body?.error) detail = body.error
+          } catch {
+            /* ignore */
+          }
+          failures.push(`${source}: ${detail}`)
         }
       }
 
       await fetchAnalytics()
+
+      if (failures.length > 0) {
+        setError(
+          failures.length === sources.length
+            ? `Не удалось загрузить источники: ${failures.join("; ")}`
+            : `Загружено с ошибками: ${failures.join("; ")}`
+        )
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error")
     } finally {
@@ -486,7 +511,11 @@ export default function DashboardPage() {
                       <td className="p-3">{translateCategory(product.category, locale)}</td>
                       <td className="p-3 font-medium">
                         {formatCurrency(
-                          convertCurrency(product.price, "USD", currency),
+                          convertCurrency(
+                            product.price,
+                            getStoredPriceCurrency(product.source),
+                            currency
+                          ),
                           currency,
                           locale
                         )}

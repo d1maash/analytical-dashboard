@@ -16,7 +16,12 @@ import {
 } from "recharts"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { TrendingUp, TrendingDown, Minus, Upload, Trash2, ImageIcon } from "lucide-react"
-import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import {
+  convertCurrency,
+  formatCurrency,
+  getCurrencyForLocale,
+  getStoredPriceCurrency,
+} from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
 import { translateCategory, translateSource } from "@/lib/translations/categories"
 
@@ -300,7 +305,11 @@ export default function ProductDetailPage() {
               <p className="text-sm text-muted-foreground">{t.dashboard.price}</p>
               <p className="text-3xl font-bold">
                 {formatCurrency(
-                  convertCurrency(product.price, "USD", currency),
+                  convertCurrency(
+                    product.price,
+                    getStoredPriceCurrency(product.source),
+                    currency
+                  ),
                   currency,
                   locale
                 )}

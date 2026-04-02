@@ -2,6 +2,13 @@ export type Currency = "USD" | "KZT"
 
 const USD_TO_KZT_RATE = 450 // Примерный курс обмена
 
+/** Источники, у которых цена в БД хранится в тенге (локальные каталоги KZ). */
+const KZT_STORED_SOURCES = new Set(["waterfilters", "airconditioners"])
+
+export function getStoredPriceCurrency(source: string): Currency {
+  return KZT_STORED_SOURCES.has(source) ? "KZT" : "USD"
+}
+
 export function convertCurrency(amount: number, from: Currency, to: Currency): number {
   if (from === to) return amount
   

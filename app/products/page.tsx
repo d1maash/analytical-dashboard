@@ -4,7 +4,12 @@ import { useEffect, useState } from "react"
 import { useStore } from "@/store/useStore"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { convertCurrency, formatCurrency, getCurrencyForLocale } from "@/lib/currency"
+import {
+  convertCurrency,
+  formatCurrency,
+  getCurrencyForLocale,
+  getStoredPriceCurrency,
+} from "@/lib/currency"
 import { translateProductName } from "@/lib/translations/products"
 import { translateCategory, translateSource } from "@/lib/translations/categories"
 
@@ -133,7 +138,11 @@ export default function ProductsPage() {
             </p>
             <p className="text-xl font-bold">
               {formatCurrency(
-                convertCurrency(product.price, "USD", currency),
+                convertCurrency(
+                  product.price,
+                  getStoredPriceCurrency(product.source),
+                  currency
+                ),
                 currency,
                 locale
               )}
